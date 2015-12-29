@@ -1,0 +1,13 @@
+# ROOT data files #
+###################
+*.root
+
+# Temporary files #
+###################
+*~
+*.swp
+
+# Compiles source #
+###################
+*.d
+*.so
