@@ -24,7 +24,7 @@ class EfficiencyPlots {
   public:
 
     // Constructor
-    // with option being "" or "_ar39"
+    // with option being "nobg", "ar39", or "rn222"
     EfficiencyPlots(std::string const& option);
 
     // Destructor
@@ -42,12 +42,15 @@ class EfficiencyPlots {
     // that have "reco_" in their names
     std::vector< std::string > GetRootFiles(std::string const& directory) const;
 
+    // A cut used mostly to calculate efficiencies
+    bool CutOnFlashTime(float const flashTime) const;
+
     // Improve the histogram by adjusting its width, etc.
     void ImproveHist(TH1F* const hist);
     void ImproveHist(TH1S* const hist);
 
     // Depending on whether we want to process statistics with or without Ar39
-    // this string is set to "" or "_ar39" 
+    // this string is set to "nobg", "ar39", or "rn222"
     std::string const fOption;
 
     // Vector containing different optical flash threshold values
