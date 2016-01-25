@@ -25,7 +25,7 @@ class EfficiencyPlots {
 
     // Constructor
     // with option being "nobg", "ar39", or "rn222"
-    EfficiencyPlots(std::string const& option);
+    EfficiencyPlots(std::string const& option, int const minimumNPDs);
 
     // Destructor
     ~EfficiencyPlots();
@@ -39,11 +39,16 @@ class EfficiencyPlots {
     void AnalyzeRootFile(std::string const& filename);
 
     // Get a list of all ROOT files in one directory
-    // that have "reco_" in their names
+    // that have "flashes_" in their names
     std::vector< std::string > GetRootFiles(std::string const& directory) const;
 
-    // A cut used mostly to calculate efficiencies
-    bool CutOnFlashTime(float const flashTime) const;
+    // Cuts used mostly to calculate efficiencies
+    bool FlashTimeCut(float const flashTime) const;
+
+    // Cuts used to fill histograms
+    bool NPDsCut(std::vector< float > const& PEsPerFlashPerChannel,
+                             int const flashID, int const NFlashes, 
+                                               int const NChannels);
 
     // Improve the histogram by adjusting its width, etc.
     void ImproveHist(TH1F* const hist);
@@ -52,6 +57,13 @@ class EfficiencyPlots {
     // Depending on whether we want to process statistics with or without Ar39
     // this string is set to "nobg", "ar39", or "rn222"
     std::string const fOption;
+
+    // Mininmum number of photon detectors with some signal on them
+    // that a flash has to have in order to not be discarded
+    int const fMinimumNPDs;
+
+    // Assume that all photon detectors have the same number of channels
+    int const fNChannelsPerPD;
 
     // Vector containing different optical flash threshold values
     std::vector< int > const fThresholdValues;

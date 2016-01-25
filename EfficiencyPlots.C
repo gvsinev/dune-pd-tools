@@ -22,8 +22,11 @@
 
 //-----------------------------------------------------------------------------
 // Constructor
-EfficiencyPlots::EfficiencyPlots(std::string const& option) 
-                                : fOption(option)
+EfficiencyPlots::EfficiencyPlots(std::string const& option, 
+                                         int const  minimumNPDs) 
+                                : fOption         ( option                )
+                                , fMinimumNPDs    ( minimumNPDs           )
+                                , fNChannelsPerPD ( 12                    )
                                 , fThresholdValues( { 2, 3, 4, 5, 7, 10 } )
                                 , fEnergyValues   ( { 8, 17, 333, 833   } ) {
 
@@ -92,16 +95,18 @@ EfficiencyPlots::~EfficiencyPlots() {
 void EfficiencyPlots::Fill() {
 
   // Make an output file with histograms
-  std::string output_name = "flash_time_dune4apa_" + fOption + ".root";
-  TFile output(output_name.c_str(), "RECREATE");
+  std::stringstream outputName;
+  outputName << "flash_time_dune4apa_" << fMinimumNPDs << '_' 
+                                       << fOption      << ".root";
+  TFile output(outputName.str().c_str(), "RECREATE");
 
   // Directory where we keep our data
-  std::string data_dir = 
+  std::string dataDir = 
     "/pnfs/lbne/scratch/users/gvsinev/photon_detectors/"
     "efficiency/dune4apa_" + fOption + "/root";
 
   // Get a vector containing names of datafiles
-  std::vector< std::string > filenames = GetRootFiles(data_dir);
+  std::vector< std::string > filenames = GetRootFiles(dataDir);
 
   // Analyze each file
   int counter = 0;
@@ -152,10 +157,17 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
     // Variables to read from the tree
     float trkMomentum[1000];
     float trkStartX[1000];
-    std::vector< float >* flashTimeVector;
-    anaTree  ->SetBranchAddress("trkmom_MC",        trkMomentum    );
-    anaTree  ->SetBranchAddress("trkstartx_MC",     trkStartX      );
+    anaTree  ->SetBranchAddress("trkmom_MC",    trkMomentum);
+    anaTree  ->SetBranchAddress("trkstartx_MC", trkStartX  );
+    int NFlashes;
+    int NChannels;
+    std::vector< float >* flashTimeVector = nullptr;
+    std::vector< float >* PEsPerFlashPerChannelVector = nullptr;
+    flashTree->SetBranchAddress("NFlashes",        &NFlashes       );
+    flashTree->SetBranchAddress("NChannels",       &NChannels      );
     flashTree->SetBranchAddress("FlashTimeVector", &flashTimeVector);
+    flashTree->SetBranchAddress("PEsPerFlashPerChannelVector", 
+                                       &PEsPerFlashPerChannelVector);
 
     // Loop through the events filling the histograms
     Long64_t nEntries = flashTree->GetEntries();
@@ -173,21 +185,28 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
             (1000*trkMomentum[0] < 1.2*float(energy))) {
           bool  flashSignal     = false;
           short numberOfFlashes = 0;
-          for (const float& flashTime : *flashTimeVector) {
-            fSignalHists[threshold][energy]->Fill(trkStartX[0], flashTime);
-            // Assume we see the signal if there is at least one flash
-            // passing the cut
-            if (CutOnFlashTime(flashTime)) {
-              flashSignal = true;
-              ++numberOfFlashes;
+
+          // Should I make this loop a function?
+          for (int flashCounter = 0; flashCounter < NFlashes; 
+                                              ++flashCounter)
+            if (NPDsCut(*PEsPerFlashPerChannelVector, 
+                        flashCounter, NFlashes, NChannels)) {
+              fSignalHists[threshold][energy]->Fill(trkStartX[0], 
+                               flashTimeVector->at(flashCounter));
+              fBackgroundHists[threshold]
+                        ->Fill(flashTimeVector->at(flashCounter));
+              // Assume we see the signal if there is at least one flash
+              // passing the cut
+              if (FlashTimeCut(flashTimeVector->at(flashCounter))) {
+                flashSignal = true;
+                ++numberOfFlashes;
+              }
             }
-          }
+
           fEfficiencyHists[threshold][energy]->Fill(flashSignal, trkStartX[0]);
           fNumberOfFlashesHists[threshold][energy]->Fill(numberOfFlashes);
         }
 
-      for (const float& flashTime : *flashTimeVector)
-        fBackgroundHists[threshold]->Fill(flashTime);
     }
 
   }
@@ -222,9 +241,38 @@ std::vector< std::string > EfficiencyPlots::GetRootFiles
 
 //-----------------------------------------------------------------------------
 // Return true if -1 us < flashTime < 10 us, false otherwise
-bool EfficiencyPlots::CutOnFlashTime(float const flashTime) const {
+bool EfficiencyPlots::FlashTimeCut(float const flashTime) const {
 
   return ((flashTime < 10.0) && (flashTime > -1.0));
+
+}
+
+//-----------------------------------------------------------------------------
+// Return true if number of PDs fired is greater than fMinimumNPDs
+bool EfficiencyPlots::NPDsCut
+                      (std::vector< float > const& PEsPerFlashPerChannel,
+                                   int const flashID, int const NFlashes, 
+                                                     int const NChannels) {
+                        
+  // Assume that a PD has some signal on it 
+  // if its number of PEs is greater than this
+  float minimumPEs = 0.1;
+
+  float PEsPerPD = 0.0;
+  int firstChannel = flashID*NChannels;
+  int nextFlash    = firstChannel + NChannels;
+  int NSignalPDs   = 0;
+  for (int channelCounter = firstChannel; channelCounter < nextFlash;
+                                                    ++channelCounter) {
+    PEsPerPD += PEsPerFlashPerChannel.at(channelCounter);
+    if (!((channelCounter - firstChannel + 1)%fNChannelsPerPD)) {
+      if (PEsPerPD > minimumPEs) ++NSignalPDs;
+      PEsPerPD = 0;
+    }
+  }
+
+  if (NSignalPDs >= fMinimumNPDs) return true;
+  else                            return false;
 
 }
 
