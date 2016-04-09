@@ -214,10 +214,14 @@ void CompareTwo::Draw() {
   padLeft->Draw();
   padLeft->cd();
 
+  const int energy = fEnergyValues.at(0);
+  std::stringstream YAxisTitle;
+  YAxisTitle << energy << " MeV electron efficiency";
+
   TH1F *axesLeft = canvas->DrawFrame(1.0, 0.0, 11.0, 1.1);
   axesLeft->Draw();
-  axesLeft->SetXTitle("Flash Threshold");
-  axesLeft->SetYTitle("Efficiency");
+  axesLeft->SetXTitle("PE threshold");
+  axesLeft->SetYTitle(YAxisTitle.str().c_str());
   axesLeft->GetXaxis()->SetTitleSize(0.05);
   axesLeft->GetYaxis()->SetTitleSize(axesLeft->GetXaxis()->GetTitleSize());
   axesLeft->GetXaxis()->SetLabelSize(axesLeft->GetXaxis()->GetTitleSize());
@@ -226,11 +230,11 @@ void CompareTwo::Draw() {
   axesLeft->GetXaxis()->CenterTitle();
   axesLeft->GetYaxis()->CenterTitle();
 
-  fEfficiencyVSThreshold[fOptions.at(1)][8]->SetLineWidth(3);
-  fEfficiencyVSThreshold[fOptions.at(1)][8]->Draw("LP");
-  fEfficiencyVSThreshold[fOptions.at(0)][8]->SetLineWidth(3);
-  fEfficiencyVSThreshold[fOptions.at(0)][8]->SetLineStyle(7);
-  fEfficiencyVSThreshold[fOptions.at(0)][8]->Draw("LPsame");
+  fEfficiencyVSThreshold[fOptions.at(1)][energy]->SetLineWidth(3);
+  fEfficiencyVSThreshold[fOptions.at(1)][energy]->Draw("LP");
+  fEfficiencyVSThreshold[fOptions.at(0)][energy]->SetLineWidth(3);
+  fEfficiencyVSThreshold[fOptions.at(0)][energy]->SetLineStyle(7);
+  fEfficiencyVSThreshold[fOptions.at(0)][energy]->Draw("LPsame");
   
   //canvas->cd(1);
   canvas->cd();
@@ -254,7 +258,8 @@ void CompareTwo::Draw() {
   Double_t xMin = padLeft->GetUxmin();
   Double_t yMin = 0;
   Double_t xMax = padLeft->GetUxmax();
-  Double_t yMax = 15.0;
+  //Double_t yMax = 15.0;
+  Double_t yMax = 3.5;
 
   TH1F *axesOverlayLeft = overlayLeft->DrawFrame(xMin, yMin, xMax, yMax);
   axesOverlayLeft->GetXaxis()->SetLabelOffset(99);
@@ -270,7 +275,7 @@ void CompareTwo::Draw() {
                                  yMin, yMax, 510, "+L");
   axisLeft->SetLineColor(kRed);
   axisLeft->SetLabelColor(kRed);
-  axisLeft->SetTitle("Background Rate Per PD [kHz]");
+  axisLeft->SetTitle("Background rate per PD [kHz]");
   axisLeft->CenterTitle();
   axisLeft->SetTitleSize(axesLeft->GetTitleSize());
   axisLeft->SetLabelSize(axesLeft->GetLabelSize());
@@ -283,11 +288,13 @@ void CompareTwo::Draw() {
   axisLeft->Draw();
 
   TLegend *legend = new TLegend(0.55, 0.65, 0.85, 0.85);
-  //legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(1)][8], "With Ar39","l");
-  legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(1)][8], 
+  //legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(1)][energy], 
+  //                                                "With Ar39","l");
+  legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(1)][energy], 
                                   fOptions.at(1).c_str(),"l");
-  //legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(0)][8], "Without Ar39","l");
-  legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(0)][8], 
+  //legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(0)][energy], 
+  //                                             "Without Ar39","l");
+  legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(0)][energy], 
                                   fOptions.at(0).c_str(),"l");
   legend->SetLineColor(0);
   legend->SetTextSize(axesLeft->GetXaxis()->GetTitleSize());
