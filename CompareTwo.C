@@ -55,7 +55,7 @@ void CompareTwo(std::string const& option1, std::string const& option2,
   padLeft->cd();
 
   std::stringstream YAxisTitle;
-  YAxisTitle << energy << "MeV electron efficiency";
+  YAxisTitle << energy << " MeV electron efficiency";
 
   TH1F *axesLeft = canvas->DrawFrame(1.0, 0.0, 11.0, 1.1);
   axesLeft->Draw();
