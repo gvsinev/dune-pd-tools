@@ -8,10 +8,10 @@
 
 // ROOT includes
 #include "TH1F.h"
+#include "TH1S.h"
 #include "TEfficiency.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
-#include "TFile.h"
 
 // C++ includes
 #include <sstream>
@@ -20,13 +20,11 @@
 //-----------------------------------------------------------------------------
 // Constructor
 ThresholdPlots::ThresholdPlots(std::string const& option,
-                               unsigned int const minimumNPDs, 
-                               unsigned int const NEvents)
+                               unsigned int const minimumNPDs)
                       : fThresholdValues( { 2, 3, 4, 5, 7, 10 } )
                       , fEnergyValues   ( { 8, 17, 333, 833 }   )
                       , fOption         ( option      )
                       , fMinimumNPDs    ( minimumNPDs ) 
-                      , fNumberOfEvents ( NEvents     ) 
                       , fNPDs           ( 40          ) {
 
   fInputFilename = "flash_time_dune4apa_" + std::to_string(fMinimumNPDs) + "_" 
@@ -142,9 +140,11 @@ void ThresholdPlots::FillBackgroundVSThreshold() {
     TH1F *backgroundHist = dynamic_cast< TH1F* >
                            (file.Get(backgroundHistName.str().c_str()));
 
+    unsigned int numberOfEvents = GetNumberOfEvents(file);
+
     // Calculate the background rate
     float events      = backgroundHist->Integral();
-    float scale       = 1.0/(fBackgroundReadoutWindow*fNumberOfEvents*
+    float scale       = 1.0/(fBackgroundReadoutWindow*numberOfEvents*
                           fBackgroundReadoutWindow/fEventReadoutWindow*fNPDs);
     float rate        = events*scale;
     float uncertainty = std::sqrt(events)*scale;
@@ -155,5 +155,23 @@ void ThresholdPlots::FillBackgroundVSThreshold() {
 
     ++counter;
   }
+
+}
+
+//-----------------------------------------------------------------------------
+// Get the total number of events by combining the number of entries
+// in number_of_flashes_2_{8,17,333,833} for different energy values
+// (the flash threshold doesn't matter here, so I chose 2 PE)
+unsigned int ThresholdPlots::GetNumberOfEvents(TFile &file) {
+
+  unsigned int numberOfEvents(0);
+
+  for (int const& energy : fEnergyValues) {
+    std::string histogramName("number_of_flashes_2_" + std::to_string(energy));
+    TH1S histogram(*dynamic_cast< TH1S* >(file.Get(histogramName.c_str())));
+    numberOfEvents += histogram.GetEntries();
+  }
+
+  return numberOfEvents;
 
 }

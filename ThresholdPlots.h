@@ -6,6 +6,9 @@
 // and produces efficiency and background vs threshold graphs
 //=============================================================================
 
+// ROOT includes
+#include "TFile.h"
+
 // C++ includes
 #include <map>
 #include <vector>
@@ -20,8 +23,7 @@ class ThresholdPlots {
 
     // Constructor
     ThresholdPlots(std::string const& option,
-                   unsigned int const minimumNPDs, 
-                   unsigned int const NEvents);
+                   unsigned int const minimumNPDs);
 
     // Destructor
     ~ThresholdPlots();
@@ -36,6 +38,8 @@ class ThresholdPlots {
     void FillBackgroundVSThreshold();
 
     void DivideGraphByN(TGraphErrors *graph, double n);
+
+    unsigned int GetNumberOfEvents(TFile &file);
 
     // Vector containing different optical flash threshold values
     std::vector< int > const fThresholdValues;
@@ -66,7 +70,6 @@ class ThresholdPlots {
     // Simulation parameters required to calculate the backround rate
     float fBackgroundReadoutWindow;
     float fEventReadoutWindow;
-    unsigned int const fNumberOfEvents;
     unsigned int const fNPDs;
 
 };
