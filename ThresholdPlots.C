@@ -94,7 +94,7 @@ void ThresholdPlots::Fill() {
 // Use TEfficiencies (as functions of X) to fill the efficiency graphs
 void ThresholdPlots::FillEfficiencyVSThreshold() {
 
-  TFile *file = new TFile(fInputFilename.c_str());
+  TFile file(fInputFilename.c_str());
 
   for (int const& energy : fEnergyValues) {
     int counter = 0; // Counter to keep track of which graph point we set
@@ -103,8 +103,8 @@ void ThresholdPlots::FillEfficiencyVSThreshold() {
       // Get the TEfficiency histogram
       std::stringstream efficiencyHistName;
       efficiencyHistName << "efficiency_" << threshold << "_" << energy;
-      TEfficiency *efficiencyHist = 
-        (TEfficiency*)file->Get(efficiencyHistName.str().c_str());
+      TEfficiency *efficiencyHist = dynamic_cast< TEfficiency* >
+                           (file.Get(efficiencyHistName.str().c_str()));
 
       // Get average efficiency for that histogram
       TH1F passed(*(TH1F*)efficiencyHist->GetPassedHistogram());
@@ -125,15 +125,13 @@ void ThresholdPlots::FillEfficiencyVSThreshold() {
     }
   }
   
-  delete file;
-
 }
 
 //-----------------------------------------------------------------------------
 // Use background TH1Fs (as functions of X) to fill the background graph
 void ThresholdPlots::FillBackgroundVSThreshold() {
 
-  TFile *file = new TFile(fInputFilename.c_str());
+  TFile file(fInputFilename.c_str());
 
   int counter = 0; // Counter to keep track of which graph point we set
 
@@ -141,7 +139,8 @@ void ThresholdPlots::FillBackgroundVSThreshold() {
     // Get the TH1F background histogram
     std::stringstream backgroundHistName;
     backgroundHistName << "background_" << threshold;
-    TH1F *backgroundHist = (TH1F*)file->Get(backgroundHistName.str().c_str());
+    TH1F *backgroundHist = dynamic_cast< TH1F* >
+                           (file.Get(backgroundHistName.str().c_str()));
 
     // Calculate the background rate
     float events      = backgroundHist->Integral();
@@ -157,128 +156,4 @@ void ThresholdPlots::FillBackgroundVSThreshold() {
     ++counter;
   }
 
-  delete file;
-
 }
-/*
-//-----------------------------------------------------------------------------
-// Produce final figures
-void ThresholdPlots::Draw() {
-
-  TCanvas *canvas = new TCanvas("canvas", "", 800, 600);
-  //canvas->Divide(2, 1);
-
-  //canvas->cd(1);
-  TPad *padLeft  = new TPad("padLeft", "", 0, 0, 1, 1);
-  padLeft->Draw();
-  padLeft->cd();
-
-  const int energy = fEnergyValues.at(0);
-  std::stringstream YAxisTitle;
-  YAxisTitle << "Efficiency";
-
-  TH1F *axesLeft = canvas->DrawFrame(1.0, 0.0, 11.0, 1.1);
-  axesLeft->Draw();
-  axesLeft->SetXTitle("PE threshold");
-  axesLeft->SetYTitle(YAxisTitle.str().c_str());
-  axesLeft->GetXaxis()->SetTitleSize(0.05);
-  axesLeft->GetYaxis()->SetTitleSize(axesLeft->GetXaxis()->GetTitleSize());
-  axesLeft->GetXaxis()->SetLabelSize(axesLeft->GetXaxis()->GetTitleSize());
-  axesLeft->GetYaxis()->SetLabelSize(axesLeft->GetXaxis()->GetTitleSize());
-  axesLeft->GetXaxis()->SetNdivisions(205);
-  axesLeft->GetXaxis()->CenterTitle();
-  axesLeft->GetYaxis()->CenterTitle();
-
-  fEfficiencyVSThreshold[fOptions.at(1)][energy]->SetLineWidth(3);
-  fEfficiencyVSThreshold[fOptions.at(1)][energy]->Draw("LP");
-  fEfficiencyVSThreshold[fOptions.at(0)][energy]->SetLineWidth(3);
-  fEfficiencyVSThreshold[fOptions.at(0)][energy]->SetLineStyle(7);
-  //fEfficiencyVSThreshold[fOptions.at(0)][energy]->Draw("LPsame");
-  
-  //canvas->cd(1);
-  canvas->cd();
-  TPad *overlayLeft = new TPad("overlayLeft", "", 0, 0, 1, 1);
-  overlayLeft->SetFillStyle(0);
-  overlayLeft->SetFillColor(0);
-  overlayLeft->SetFrameFillStyle(0);
-  //overlayLeft->SetFrameFillColor(0);
-  overlayLeft->Draw("FA");
-  overlayLeft->cd();
-
-  //fBackgroundVSThreshold[fOptions.at(1)]->SetMarkerColor(kRed);
-  double factor = 1000.0;
-  DivideGraphByN(fBackgroundVSThreshold[fOptions.at(1)], factor);
-  DivideGraphByN(fBackgroundVSThreshold[fOptions.at(0)], factor);
-  fBackgroundVSThreshold[fOptions.at(1)]->SetLineColor(kRed);
-  fBackgroundVSThreshold[fOptions.at(1)]->SetLineWidth(3);
-  fBackgroundVSThreshold[fOptions.at(0)]->SetLineWidth(3);
-  fBackgroundVSThreshold[fOptions.at(0)]->SetLineStyle(7);
-  fBackgroundVSThreshold[fOptions.at(0)]->SetLineColor(kRed);
-  Double_t xMin = padLeft->GetUxmin();
-  Double_t yMin = 0;
-  Double_t xMax = padLeft->GetUxmax();
-  //Double_t yMax = 15.0;
-  Double_t yMax = 3.5;
-
-  TH1F *axesOverlayLeft = overlayLeft->DrawFrame(xMin, yMin, xMax, yMax);
-  axesOverlayLeft->GetXaxis()->SetLabelOffset(99);
-  //axesOverlayLeft->GetXaxis()->SetAxisColor(0);
-  axesOverlayLeft->GetYaxis()->SetLabelOffset(99);
-  axesOverlayLeft->GetXaxis()->SetNdivisions(0);
-  axesOverlayLeft->GetYaxis()->SetNdivisions(0);
-
-  fBackgroundVSThreshold[fOptions.at(1)]->Draw("LP");
-  //fBackgroundVSThreshold[fOptions.at(0)]->Draw("LPsame");
-
-  TGaxis *axisLeft = new TGaxis(xMax, yMin, xMax, yMax, 
-                                 yMin, yMax, 510, "+L");
-  axisLeft->SetLineColor(kRed);
-  axisLeft->SetLabelColor(kRed);
-  axisLeft->SetTitle("Background rate per PD [kHz]");
-  axisLeft->CenterTitle();
-  axisLeft->SetTitleSize(axesLeft->GetTitleSize());
-  axisLeft->SetLabelSize(axesLeft->GetLabelSize());
-  //axisLeft->SetTitleOffset(1.2);
-  axisLeft->SetTitleFont(axesLeft->GetTitleFont());
-  axisLeft->SetLabelFont(axesLeft->GetLabelFont());
-  axisLeft->SetTitleColor(kRed);
-  axisLeft->SetNdivisions(505);
-  axisLeft->SetMaxDigits(4);
-  axisLeft->Draw();
-
-  TLegend *legend = new TLegend(0.38, 0.70, 0.83, 0.85);
-  //legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(1)][energy], 
-  //                                                "With Ar39","l");
-  std::stringstream efficiencyLegendLabel;
-  efficiencyLegendLabel << energy << " MeV electron efficiency";
-  legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(1)][energy], 
-                                 // fOptions.at(1).c_str(),"l");
-                        efficiencyLegendLabel.str().c_str(),"l");
-  //legend->AddEntry(fEfficiencyVSThreshold[fOptions.at(0)][energy], 
-  //                                             "Without Ar39","l");
-  legend->AddEntry(fBackgroundVSThreshold[fOptions.at(1)], 
-                                  //fOptions.at(1).c_str(),"l");
-                                  "^{39}Ar background rate","l");
-  legend->SetLineColor(0);
-  legend->SetTextSize(axesLeft->GetXaxis()->GetTitleSize());
-  legend->SetTextFont(axesLeft->GetXaxis()->GetTitleFont());
-  legend->Draw();
-
-}
-
-//-----------------------------------------------------------------------------
-// Divide all Y-values (and Y-errors) of a TGraph by n
-void ThresholdPlots::DivideGraphByN(TGraphErrors *graph, double n) {
-
-  int nPoints = graph->GetN();
-
-  for (int point = 0; point < nPoints; ++point) {
-    double x    = graph->GetX()[point];
-    double y    = graph->GetY()[point]/n;
-    double errX = graph->GetErrorX(point);
-    double errY = graph->GetErrorY(point)/n;
-    graph->SetPoint(point, x, y);
-    graph->SetPointError(point, errX, errY);
-  }
-
-}*/
