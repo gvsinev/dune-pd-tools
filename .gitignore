@@ -7,6 +7,10 @@
 *~
 *.swp
 
+# Log files #
+#############
+*.log
+
 # Compiled source #
 ###################
 *.d

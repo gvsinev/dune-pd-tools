@@ -48,8 +48,7 @@ class EfficiencyPlots {
 
     // Cuts used to fill histograms
     bool NPDsCut(std::vector< float > const& PEsPerFlashPerChannel,
-                             int const flashID, int const NFlashes, 
-                                               int const NChannels);
+           int const flashID, int const NFlashes, int const NChannels) const;
 
     // Improve the histogram by adjusting its width, etc.
     void ImproveHist(TH1F* const hist);

@@ -19,7 +19,7 @@
 #include <string>
 #include <iostream>
 
-// Declare all the functions used
+// Declare the functions used
 void ImproveHist(TH1F* const hist, int color);
 
 void plot_background_flashes() {

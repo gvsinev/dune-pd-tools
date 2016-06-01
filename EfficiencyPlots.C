@@ -102,7 +102,7 @@ void EfficiencyPlots::Fill() {
                                        << fOption      << ".root";
   TFile output(outputName.str().c_str(), "RECREATE");
 
-  // Directory where we keep our data
+  // Directory where the data is (or even are) kept
   std::string dataDir = 
     "/pnfs/lbne/scratch/users/gvsinev/photon_detectors/"
     "efficiency/dune4apa_" + fOption + "/root";
@@ -151,20 +151,21 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
                                ->Get("anatree");
 
   for (int const& threshold : fThresholdValues) { 
+    if (threshold != 2 && threshold != 3) continue;
     if (fDebug) std::cout << '\n' << "Threshold: " << threshold << "\n\n";
     std::stringstream flashDirectory;
     flashDirectory << "opflashana" << threshold;
     TTree *flashTree = (TTree*)file->GetDirectory(flashDirectory.str().c_str())
-                                 ->Get("PerEventFlashTree");
+                                   ->Get         ("PerEventFlashTree");
 
     // Variables to read from the tree
     float trkMomentum[1000];
     float trkStartX[1000];
-    anaTree  ->SetBranchAddress("trkmom_MC",    trkMomentum);
-    anaTree  ->SetBranchAddress("trkstartx_MC", trkStartX  );
+    anaTree->SetBranchAddress("trkmom_MC",    trkMomentum);
+    anaTree->SetBranchAddress("trkstartx_MC", trkStartX  );
     int NFlashes;
     int NChannels;
-    std::vector< float >* flashTimeVector = nullptr;
+    std::vector< float >* flashTimeVector             = nullptr;
     std::vector< float >* PEsPerFlashPerChannelVector = nullptr;
     flashTree->SetBranchAddress("NFlashes",        &NFlashes       );
     flashTree->SetBranchAddress("NChannels",       &NChannels      );
@@ -178,6 +179,7 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
     // Loop through the events filling the histograms
     Long64_t nEntries = flashTree->GetEntries();
     for (Long64_t entry = 0; entry < nEntries; ++entry) {
+      if (entry != 0 && entry != 1) continue;
       anaTree  ->GetEntry(entry);
       flashTree->GetEntry(entry);
 
@@ -269,9 +271,8 @@ bool EfficiencyPlots::FlashTimeCut(float const flashTime) const {
 //-----------------------------------------------------------------------------
 // Return true if number of PDs fired is greater than fMinimumNPDs
 bool EfficiencyPlots::NPDsCut
-                      (std::vector< float > const& PEsPerFlashPerChannel,
-                                   int const flashID, int const NFlashes, 
-                                                     int const NChannels) {
+       (std::vector< float > const& PEsPerFlashPerChannel, 
+        int const flashID, int const NFlashes, int const NChannels) const {
                         
   // Assume that a PD has some signal on it 
   // if its number of PEs is greater than this
