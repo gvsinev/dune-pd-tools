@@ -25,7 +25,8 @@ class EfficiencyPlots {
 
     // Constructor
     // with option being "nobg", "ar39", or "rn222"
-    EfficiencyPlots(std::string const& option, int const minimumNPDs);
+    EfficiencyPlots(std::string const& option, int const minimumNPDs, 
+                                            bool const debug = false);
 
     // Destructor
     ~EfficiencyPlots();
@@ -86,5 +87,7 @@ class EfficiencyPlots {
     // Number of flashes in the signal range distributions 
     // for different energy and threshold values
     std::map< int, std::map< int, TH1S* > > fNumberOfFlashesHists;
+
+    bool const fDebug;
 
 };

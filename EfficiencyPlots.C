@@ -16,6 +16,7 @@
 // C++ includes
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 
 // Other includes
 #include <dirent.h>
@@ -23,12 +24,13 @@
 //-----------------------------------------------------------------------------
 // Constructor
 EfficiencyPlots::EfficiencyPlots(std::string const& option, 
-                                         int const  minimumNPDs) 
+                                 int const  minimumNPDs, bool const debug) 
                                 : fOption         ( option                )
                                 , fMinimumNPDs    ( minimumNPDs           )
                                 , fNChannelsPerPD ( 12                    )
                                 , fThresholdValues( { 2, 3, 4, 5, 7, 10 } )
-                                , fEnergyValues   ( { 8, 17, 333, 833   } ) {
+                                , fEnergyValues   ( { 8, 17, 333, 833   } ) 
+                                , fDebug          ( debug                 ) {
 
   // Create all the histograms
   for (int const& threshold : fThresholdValues) {
@@ -149,6 +151,7 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
                                ->Get("anatree");
 
   for (int const& threshold : fThresholdValues) { 
+    if (fDebug) std::cout << '\n' << "Threshold: " << threshold << "\n\n";
     std::stringstream flashDirectory;
     flashDirectory << "opflashana" << threshold;
     TTree *flashTree = (TTree*)file->GetDirectory(flashDirectory.str().c_str())
@@ -169,11 +172,16 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
     flashTree->SetBranchAddress("PEsPerFlashPerChannelVector", 
                                        &PEsPerFlashPerChannelVector);
 
+    std::vector< float >* totalPEVector = nullptr;
+    if (fDebug) flashTree->SetBranchAddress("TotalPEVector", &totalPEVector);
+
     // Loop through the events filling the histograms
     Long64_t nEntries = flashTree->GetEntries();
     for (Long64_t entry = 0; entry < nEntries; ++entry) {
       anaTree  ->GetEntry(entry);
       flashTree->GetEntry(entry);
+
+      if (fDebug) std::cout << '\n' << "Entry number: " << entry << '\n';
 
       // Find energy of the primary particle 
       // and fill respective histogram
@@ -188,7 +196,15 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
 
           // Should I make this loop a function?
           for (int flashCounter = 0; flashCounter < NFlashes; 
-                                              ++flashCounter)
+                                              ++flashCounter) {
+            // Due to the calculation of PE in optical hits being
+            // uncalibrated, actual threshold is something like 2/3*threshold
+            // (don't remember the exact coefficient)
+            if (fDebug) std::cout << "\nThreshold: " << threshold    << 
+                                       " PE Entry: " << entry        << 
+                                   " Flash number: " << flashCounter << 
+                     " Total: " <<   totalPEVector->at(flashCounter) << 
+                   " PE Time: " << flashTimeVector->at(flashCounter) << " us\n";
             if (NPDsCut(*PEsPerFlashPerChannelVector, 
                         flashCounter, NFlashes, NChannels)) {
               fSignalHists[threshold][energy]->Fill(trkStartX[0], 
@@ -197,11 +213,14 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
                         ->Fill(flashTimeVector->at(flashCounter));
               // Assume we see the signal if there is at least one flash
               // passing the cut
+              if (fDebug) std::cout << "Accepted\n";
               if (FlashTimeCut(flashTimeVector->at(flashCounter))) {
                 flashSignal = true;
                 ++numberOfFlashes;
               }
             }
+            if (fDebug) std::cout << '\n';
+          }
 
           fEfficiencyHists[threshold][energy]->Fill(flashSignal, trkStartX[0]);
           fNumberOfFlashesHists[threshold][energy]->Fill(numberOfFlashes);
@@ -264,9 +283,12 @@ bool EfficiencyPlots::NPDsCut
   int NSignalPDs   = 0;
   for (int channelCounter = firstChannel; channelCounter < nextFlash;
                                                     ++channelCounter) {
-    PEsPerPD += PEsPerFlashPerChannel.at(channelCounter);
+    float PEs = PEsPerFlashPerChannel.at(channelCounter);
+    PEsPerPD += PEs;
+    if (fDebug) std::cout << std::setw(10) << PEs << ' ';
     if (!((channelCounter - firstChannel + 1)%fNChannelsPerPD)) {
       if (PEsPerPD > minimumPEs) ++NSignalPDs;
+      if (fDebug) std::cout << ": " << PEsPerPD << '\n';
       PEsPerPD = 0;
     }
   }
