@@ -119,8 +119,9 @@ void EfficiencyPlots::Fill() {
 
   // Make an output file with histograms
   std::stringstream outputName;
-  outputName << "flash_time_dune4apa_" << fMinimumNPDs << '_' 
-                                       << fOption      << ".root";
+  outputName << "flash_time_dune4apa_" << fMinimumNPDs << '_' << fOption;
+  if (fDebug) outputName << "_debug";
+  outputName << ".root";
   TFile output(outputName.str().c_str(), "RECREATE");
 
   // Directory where the data is (or even are) kept
