@@ -47,8 +47,12 @@ class EfficiencyPlots {
     bool FlashTimeCut(float const flashTime) const;
 
     // Cuts used to fill histograms
-    bool NPDsCut(std::vector< float > const& PEsPerFlashPerChannel,
-           int const flashID, int const NFlashes, int const NChannels) const;
+    bool NSignalPDCut(unsigned int const NSignalPDs) const;
+
+    // Get the number of PDs that have hits
+    unsigned int GetNSignalPDs
+      (std::vector< float > const& PEsPerFlashPerChannel,
+       int const flashID, int const NFlashes, int const NChannels) const;
 
     // Improve the histogram by adjusting its width, etc.
     void ImproveHist(TH1F* const hist);
@@ -60,7 +64,7 @@ class EfficiencyPlots {
 
     // Mininmum number of photon detectors with some signal on them
     // that a flash has to have in order to not be discarded
-    int const fMinimumNPDs;
+    unsigned int const fMinimumNPDs;
 
     // Assume that all photon detectors have the same number of channels
     int const fNChannelsPerPD;
@@ -71,13 +75,21 @@ class EfficiencyPlots {
     // Vector containing different simulated energy values
     std::vector< int > const fEnergyValues;
 
-    // Flash time distributions in the background range 
+    // Flash time distributions in the background region 
     // for different threshold values
     std::map< int, TH1F* > fBackgroundHists;
 
-    // Flash time distributions in the singal range 
+    // PEs-vs-NSignalPDs 2D distribution for background flashes
+    // for different threshold values
+    std::map< int, TH2F* > fBackgroundPEVsNPDHistMap;
+
+    // Flash time distributions in the signal region 
     // for different energy and threshold values
     std::map< int, std::map< int, TH2F* > > fSignalHists;
+
+    // PEs-vs-NSignalPDs 2D distribution for flashes in the signal region
+    // for different energy and threshold values
+    std::map< int, std::map< int, TH2F* > > fSignalPEVsNPDHistMap;
 
     // Efficiency distributions in the singal range 
     // for different energy and threshold values
