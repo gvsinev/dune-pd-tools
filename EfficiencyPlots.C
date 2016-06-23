@@ -49,6 +49,20 @@ EfficiencyPlots::EfficiencyPlots(std::string const& option,
                            ";PEs;number of PDs with signal", 200, 0.0, 20.0,
                                                               20,   0, 20  ));
 
+    // Make PEs-vs-width 2D histograms for background flashes
+    std::string backgroundPEVsYWidthHistName("background_pe_vs_ywidth_" 
+                                             + std::to_string(threshold));
+    fBackgroundPEVsYWidthHistMap.emplace
+      (threshold, new TH2F(backgroundPEVsYWidthHistName.c_str(), 
+                           ";PEs;Y width (cm)", 200, 0.0,  20.0,
+                                               2400, 0.0, 600.0));
+    std::string backgroundPEVsZWidthHistName("background_pe_vs_zwidth_" 
+                                             + std::to_string(threshold));
+    fBackgroundPEVsZWidthHistMap.emplace
+      (threshold, new TH2F(backgroundPEVsZWidthHistName.c_str(), 
+                           ";PEs;Z width (cm)", 200, 0.0,  20.0,
+                                                480, 0.0, 120.0));
+
     for (int const& energy : fEnergyValues) {
       // Make flash time histograms for the signal region
       std::stringstream signalHistName;
@@ -63,8 +77,25 @@ EfficiencyPlots::EfficiencyPlots(std::string const& option,
                                                  + std::to_string(energy));
       fSignalPEVsNPDHistMap[threshold].emplace
         (energy, new TH2F(signalPEVsNPDHistName.c_str(), 
-                          ";PEs;number of PDs with signal", 400, 0.0, 40.0,
-                                                             40,   0, 40  ));
+                          ";PEs;number of PDs with signal", 
+                                        40000, 0.0, 4000.0,
+                                           40,   0, 40    ));
+
+      // Make PEs-vs-width 2D histograms for flashes in the signal region
+      std::string signalPEVsYWidthHistName("signal_pe_vs_ywidth_" 
+                                           + std::to_string(threshold) + '_' 
+                                                     + std::to_string(energy));
+      fSignalPEVsYWidthHistMap[threshold].emplace
+        (energy, new TH2F(signalPEVsYWidthHistName.c_str(), 
+                          ";PEs;Y width (cm)", 40000, 0.0, 4000.0,
+                                                1200, 0.0,  600.0));
+      std::string signalPEVsZWidthHistName("signal_pe_vs_zwidth_" 
+                                           + std::to_string(threshold) + '_' 
+                                                     + std::to_string(energy));
+      fSignalPEVsZWidthHistMap[threshold].emplace
+        (energy, new TH2F(signalPEVsZWidthHistName.c_str(), 
+                          ";PEs;Z width (cm)", 40000, 0.0, 4000.0,
+                                                 480, 0.0,  120.0));
 
       // Make efficiency histograms
       std::stringstream efficiencyHistName;
@@ -95,11 +126,21 @@ EfficiencyPlots::~EfficiencyPlots() {
     delete backgroundHist.second;
   for (auto const& intHistPair : fBackgroundPEVsNPDHistMap)
     delete intHistPair.second;
+  for (auto const& intHistPair : fBackgroundPEVsYWidthHistMap)
+    delete intHistPair.second;
+  for (auto const& intHistPair : fBackgroundPEVsZWidthHistMap)
+    delete intHistPair.second;
   // Delete the signal histograms
   for (auto const& signalHistThreshold : fSignalHists) 
     for (auto const& signalHist : signalHistThreshold.second)
       delete signalHist.second;
   for (auto const& intIntHistPair : fSignalPEVsNPDHistMap)
+    for (auto const& intHistPair : intIntHistPair.second)
+      delete intHistPair.second;
+  for (auto const& intIntHistPair : fSignalPEVsYWidthHistMap)
+    for (auto const& intHistPair : intIntHistPair.second)
+      delete intHistPair.second;
+  for (auto const& intIntHistPair : fSignalPEVsZWidthHistMap)
     for (auto const& intHistPair : intIntHistPair.second)
       delete intHistPair.second;
   // Delete the efficiency histograms
@@ -147,11 +188,21 @@ void EfficiencyPlots::Fill() {
     backgroundHist.second->Write();
   for (auto const& intHistPair : fBackgroundPEVsNPDHistMap)
     intHistPair.second->Write();
+  for (auto const& intHistPair : fBackgroundPEVsYWidthHistMap)
+    intHistPair.second->Write();
+  for (auto const& intHistPair : fBackgroundPEVsZWidthHistMap)
+    intHistPair.second->Write();
   // Save the signal histograms to the file
   for (auto const& signalHistThreshold : fSignalHists) 
     for (auto const& signalHist : signalHistThreshold.second)
       signalHist.second->Write();
   for (auto const& intIntHistPair : fSignalPEVsNPDHistMap)
+    for (auto const& intHistPair : intIntHistPair.second)
+      intHistPair.second->Write();
+  for (auto const& intIntHistPair : fSignalPEVsYWidthHistMap)
+    for (auto const& intHistPair : intIntHistPair.second)
+      intHistPair.second->Write();
+  for (auto const& intIntHistPair : fSignalPEVsZWidthHistMap)
     for (auto const& intHistPair : intIntHistPair.second)
       intHistPair.second->Write();
   // Save the efficiency histograms to the file
@@ -194,12 +245,16 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
     std::vector< float >* flashTimeVector             = nullptr;
     std::vector< float >* PEsPerFlashPerChannelVector = nullptr;
     std::vector< float >* totalPEVector               = nullptr;
+    std::vector< float >* YWidthVector                = nullptr;
+    std::vector< float >* ZWidthVector                = nullptr;
     flashTree->SetBranchAddress("NFlashes",        &NFlashes       );
     flashTree->SetBranchAddress("NChannels",       &NChannels      );
     flashTree->SetBranchAddress("FlashTimeVector", &flashTimeVector);
     flashTree->SetBranchAddress("PEsPerFlashPerChannelVector", 
                                        &PEsPerFlashPerChannelVector);
     flashTree->SetBranchAddress("TotalPEVector",   &totalPEVector  );
+    flashTree->SetBranchAddress("YWidthVector",    &YWidthVector   );
+    flashTree->SetBranchAddress("ZWidthVector",    &ZWidthVector   );
 
     // Loop through the events filling the histograms
     Long64_t nEntries = flashTree->GetEntries();
@@ -245,12 +300,24 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
               if (FlashTimeCut(flashTimeVector->at(flashCounter))) {
                 flashSignal = true;
                 ++numberOfFlashes;
-                fSignalPEVsNPDHistMap[threshold][energy]
+                fSignalPEVsNPDHistMap   [threshold][energy]
                   ->Fill(totalPEVector->at(flashCounter), NSignalPDs);
+                fSignalPEVsYWidthHistMap[threshold][energy]
+                  ->Fill(totalPEVector->at(flashCounter), 
+                                      YWidthVector->at(flashCounter));
+                fSignalPEVsZWidthHistMap[threshold][energy]
+                  ->Fill(totalPEVector->at(flashCounter), 
+                                      ZWidthVector->at(flashCounter));
               }
               else {
-                fBackgroundPEVsNPDHistMap[threshold]
+                fBackgroundPEVsNPDHistMap   [threshold]
                   ->Fill(totalPEVector->at(flashCounter), NSignalPDs);
+                fBackgroundPEVsYWidthHistMap[threshold]
+                  ->Fill(totalPEVector->at(flashCounter), 
+                                      YWidthVector->at(flashCounter));
+                fBackgroundPEVsZWidthHistMap[threshold]
+                  ->Fill(totalPEVector->at(flashCounter), 
+                                      ZWidthVector->at(flashCounter));
               }
             }
             if (fDebug) std::cout << '\n';

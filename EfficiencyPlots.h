@@ -82,6 +82,9 @@ class EfficiencyPlots {
     // PEs-vs-NSignalPDs 2D distribution for background flashes
     // for different threshold values
     std::map< int, TH2F* > fBackgroundPEVsNPDHistMap;
+    
+    std::map< int, TH2F* > fBackgroundPEVsYWidthHistMap;
+    std::map< int, TH2F* > fBackgroundPEVsZWidthHistMap;
 
     // Flash time distributions in the signal region 
     // for different energy and threshold values
@@ -90,6 +93,9 @@ class EfficiencyPlots {
     // PEs-vs-NSignalPDs 2D distribution for flashes in the signal region
     // for different energy and threshold values
     std::map< int, std::map< int, TH2F* > > fSignalPEVsNPDHistMap;
+
+    std::map< int, std::map< int, TH2F* > > fSignalPEVsYWidthHistMap;
+    std::map< int, std::map< int, TH2F* > > fSignalPEVsZWidthHistMap;
 
     // Efficiency distributions in the singal range 
     // for different energy and threshold values
