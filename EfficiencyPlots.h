@@ -17,6 +17,7 @@
 class TH1S;
 class TH1F;
 class TH2F;
+class TTree;
 class TEfficiency;
 
 class EfficiencyPlots {
@@ -58,6 +59,10 @@ class EfficiencyPlots {
     void ImproveHist(TH1F* const hist);
     void ImproveHist(TH1S* const hist);
 
+    // Get the maximum value for a certain int branch in a TTree
+    int TTreeGetMaxIntValue(std::string const& branch, 
+                                    TTree* const tree) const;
+    
     // Depending on whether we want to process statistics with or without Ar39
     // this string is set to "nobg", "ar39", or "rn222"
     std::string const fOption;

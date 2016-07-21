@@ -28,7 +28,8 @@ EfficiencyPlots::EfficiencyPlots(std::string const& option,
                                 : fOption         ( option                )
                                 , fMinimumNPDs    ( minimumNPDs           )
                                 , fNChannelsPerPD ( 12                    )
-                                , fThresholdValues( { 2, 3, 4, 5, 7, 10 } )
+                                , fThresholdValues
+                                         ( { 2, 3, 4, 5, 6, 7, 8, 9, 10 } )
                                 , fEnergyValues   ( { 8, 17, 333, 833   } ) 
                                 , fDebug          ( debug                 ) {
 
@@ -167,7 +168,7 @@ void EfficiencyPlots::Fill() {
 
   // Directory where the data is (or even are) kept
   std::string dataDir = 
-    "/pnfs/lbne/scratch/users/gvsinev/photon_detectors/"
+    "/pnfs/dune/scratch/users/gvsinev/photon_detectors/"
     "efficiency/dune4apa_" + fOption + "/root";
 
   // Get a vector containing names of datafiles
@@ -228,6 +229,15 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
   TTree *anaTree = (TTree*)file->GetDirectory(anaTreeDirectory.c_str())
                                ->Get("anatree");
 
+  // Variables to read from the analysis tree
+  const int maximumNPrimaries = TTreeGetMaxIntValue("geant_list_size", anaTree);
+  int NPrimaries;
+  anaTree->SetBranchAddress("geant_list_size", &NPrimaries);
+  float trkMomentum[maximumNPrimaries];
+  float trkStartX[maximumNPrimaries];
+  anaTree->SetBranchAddress("StartP_drifted", trkMomentum);
+  anaTree->SetBranchAddress("StartPointx",    trkStartX  );
+
   for (int const& threshold : fThresholdValues) { 
     if (fDebug) std::cout << '\n' << "Threshold: " << threshold << "\n\n";
     std::stringstream flashDirectory;
@@ -235,11 +245,7 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
     TTree *flashTree = (TTree*)file->GetDirectory(flashDirectory.str().c_str())
                                    ->Get         ("PerEventFlashTree");
 
-    // Variables to read from the tree
-    float trkMomentum[1000];
-    float trkStartX[1000];
-    anaTree->SetBranchAddress("trkmom_MC",    trkMomentum);
-    anaTree->SetBranchAddress("trkstartx_MC", trkStartX  );
+    // Variables to read from the flash tree
     int NFlashes;
     int NChannels;
     std::vector< float >* flashTimeVector             = nullptr;
@@ -258,6 +264,11 @@ void EfficiencyPlots::AnalyzeRootFile(std::string const& filename) {
 
     // Loop through the events filling the histograms
     Long64_t nEntries = flashTree->GetEntries();
+    if (nEntries != anaTree->GetEntries()) {
+      std::cout << "anaTree and flashTree have different number of entries." 
+                << '\n';
+      return;
+    }
     for (Long64_t entry = 0; entry < nEntries; ++entry) {
       anaTree  ->GetEntry(entry);
       flashTree->GetEntry(entry);
@@ -419,5 +430,26 @@ void EfficiencyPlots::ImproveHist(TH1S* const hist) {
 
   hist->SetLineWidth(2);
   hist->SetMinimum(0);
+
+}
+
+//-----------------------------------------------------------------------------
+// Find the maximum value of an integer value in a tree
+int EfficiencyPlots::TTreeGetMaxIntValue(std::string const& branch, 
+                                                 TTree* const tree) const {
+
+  int maxValue = 0;
+
+  int value;
+  tree->SetBranchAddress(branch.c_str(), &value);
+
+  // Loop through the tree
+  Long64_t nEntries = tree->GetEntries();
+  for (Long64_t entry = 0; entry < nEntries; ++entry) {
+    tree->GetEntry(entry);
+    maxValue = (value > maxValue) ? value : maxValue;
+  }
+
+  return maxValue;
 
 }
