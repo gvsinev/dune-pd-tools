@@ -21,18 +21,14 @@
 // Constructor
 ThresholdPlots::ThresholdPlots(std::string const& option,
                                unsigned int const minimumNPDs)
-                      : fThresholdValues( { 2, 3, 4, 5, 7, 10 } )
-                      , fEnergyValues   ( { 8, 17, 333, 833 }   )
+                      : fThresholdValues( { 2, 3, 4, 5, 6, 7, 8, 9, 10 } )
+                      , fEnergyValues   ( { 8, 17, 333, 833 } )
                       , fOption         ( option      )
                       , fMinimumNPDs    ( minimumNPDs ) 
-                      , fNPDs           ( 40          ) {
+                      , fNPDs           ( 120         ) {
 
   fInputFilename = "flash_time_dune4apa_" + std::to_string(fMinimumNPDs) + "_" 
                                           + fOption + ".root";
-
-  fBackgroundReadoutWindow = 0.0020;          // In seconds
-//  fEventReadoutWindow      = 0.001*4.492/2;   // In seconds
-  fEventReadoutWindow      = 0.001*4.492;     // In seconds
 
   for (int const& energy : fEnergyValues) {
     // Make efficiency versus flash threshold graphs
@@ -143,9 +139,9 @@ void ThresholdPlots::FillBackgroundVSThreshold() {
     unsigned int numberOfEvents = GetNumberOfEvents(file);
 
     // Calculate the background rate
+    float backgroundReadoutWindow = GetXRange(backgroundHist);
     float events      = backgroundHist->Integral();
-    float scale       = 1.0/(fBackgroundReadoutWindow*numberOfEvents*
-                          fBackgroundReadoutWindow/fEventReadoutWindow*fNPDs);
+    float scale       = 1.0/(backgroundReadoutWindow*numberOfEvents*fNPDs);
     float rate        = events*scale;
     float uncertainty = std::sqrt(events)*scale;
 
@@ -162,7 +158,7 @@ void ThresholdPlots::FillBackgroundVSThreshold() {
 // Get the total number of events by combining the number of entries
 // in number_of_flashes_2_{8,17,333,833} for different energy values
 // (the flash threshold doesn't matter here, so I chose 2 PE)
-unsigned int ThresholdPlots::GetNumberOfEvents(TFile &file) {
+unsigned int ThresholdPlots::GetNumberOfEvents(TFile &file) const {
 
   unsigned int numberOfEvents(0);
 
@@ -173,5 +169,17 @@ unsigned int ThresholdPlots::GetNumberOfEvents(TFile &file) {
   }
 
   return numberOfEvents;
+
+}
+
+//-----------------------------------------------------------------------------
+// Calculate the X range of the histogram
+float ThresholdPlots::GetXRange(TH1F *hist) const {
+
+  unsigned int nBins = hist->GetNbinsX();
+  float us2s  = 0.001*0.001;
+  float range = us2s*(hist->GetBinCenter(nBins) - hist->GetBinCenter(0));
+
+  return range;
 
 }

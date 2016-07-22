@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 
+class TH1F;
 class TGraphErrors;
 class TGraphAsymmErrors;
 
@@ -37,9 +38,9 @@ class ThresholdPlots {
     void FillEfficiencyVSThreshold();
     void FillBackgroundVSThreshold();
 
-    void DivideGraphByN(TGraphErrors *graph, double n);
+    unsigned int GetNumberOfEvents(TFile &file) const;
 
-    unsigned int GetNumberOfEvents(TFile &file);
+    float GetXRange(TH1F *hist) const;
 
     // Vector containing different optical flash threshold values
     std::vector< int > const fThresholdValues;
@@ -67,9 +68,7 @@ class ThresholdPlots {
     // Output filename of the EfficiencyPlots class
     std::string fInputFilename;
 
-    // Simulation parameters required to calculate the backround rate
-    float fBackgroundReadoutWindow;
-    float fEventReadoutWindow;
+    // Number of photon detectors in the geometry
     unsigned int const fNPDs;
 
 };

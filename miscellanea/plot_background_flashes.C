@@ -1,7 +1,7 @@
 //=============================================================================
 // plot_background_flashes.C
 //
-// Gleb Sinev, Duke, 2015
+// Gleb Sinev, Duke, 2016
 // Plot background flash distributions for different flash thresholds 
 // from /dune/app/users/gvsinev/
 //        larsoft_pd/test_pd/dune-pd-tools/flash_time_dune4apa_3_rn222.root
