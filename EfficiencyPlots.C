@@ -161,7 +161,7 @@ void EfficiencyPlots::Fill() {
 
   // Make an output file with histograms
   std::stringstream outputName;
-  outputName << "flash_time_dune4apa_" << fMinimumNPDs << '_' << fOption;
+  outputName << "flash_time_dune1x2x6_" << fMinimumNPDs << '_' << fOption;
   if (fDebug) outputName << "_debug";
   outputName << ".root";
   TFile output(outputName.str().c_str(), "RECREATE");
@@ -169,7 +169,7 @@ void EfficiencyPlots::Fill() {
   // Directory where the data is (or even are) kept
   std::string dataDir = 
     "/pnfs/dune/scratch/users/gvsinev/photon_detectors/"
-    "efficiency/dune4apa_" + fOption + "/root";
+    "efficiency/dune1x2x6_" + fOption + "/root";
 
   // Get a vector containing names of datafiles
   std::vector< std::string > filenames = GetRootFiles(dataDir);
