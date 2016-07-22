@@ -19,7 +19,7 @@
 
 // Function declarations
 
-void plot_background_vs_threshold(unsigned int threshold) {
+void plot_efficiency_vs_x(unsigned int threshold) {
 
   // File with the histograms
   std::string inputFileName("/dune/app/users/gvsinev/larsoft_pd/test_pd/"
@@ -30,10 +30,11 @@ void plot_background_vs_threshold(unsigned int threshold) {
                  "Efficiency versus flash threshold for 8-MeV electrons", 
                                                        0, 10, 2000, 1000);
 
-  float xMax = 400.0;
+  float xMin = 0.0;
+  float xMax = 360.0;
   float yMin = 0.0;
   float yMax = 1.05;
-  TH1F frame(*canvas.DrawFrame(-xMax, yMin, xMax, yMax));
+  TH1F frame(*canvas.DrawFrame(xMin, yMin, xMax, yMax));
   frame.GetXaxis()->SetTitle("X (cm)");
   frame.GetYaxis()->SetTitle("8-MeV-electron flash efficiency");
   frame.Draw();
