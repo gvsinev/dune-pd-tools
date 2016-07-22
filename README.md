@@ -21,8 +21,12 @@ and background rate (overlaid) as functions of the flash threshold.
 ## Other tools
 
 ### plot\_background\_flashes.C
-This script plots background flash time plots for different flash thresholds on top of each other.
+This script plots background-flash time plots for different flash thresholds on top of each other.
 It runs on the output of the `EfficiencyPlots` class (for now the input file is hardcoded).
 
 ### diff\_thresholds\_2\_3.C
 This script outputs information about flashes that appear in the 3-PE-threshold sample, but not in the 2-PE-threshold one.
+
+### plot\_background\_vs\_threshold.C
+This script produces a presentable plot of Ar39 background flashes versus the flash threshold.
+It runs on the output of the `ThresholdPlots` class (for now the input file is hardcoded).
