@@ -30,3 +30,8 @@ This script outputs information about flashes that appear in the 3-PE-threshold 
 ### plot\_background\_vs\_threshold.C
 This script produces a presentable plot of Ar39 background flashes versus the flash threshold.
 It runs on the output of the `ThresholdPlots` class (for now the input file is hardcoded).
+
+### plot\_efficiency\_vs\_x.C
+This script produces a presentable plot of the 8-MeV-electron flash efficiency 
+versus X (distance from the APA) for a certain flash threshold.
+It runs on the output of the `EfficiencyPlots` class (for now the input file is hardcoded).
