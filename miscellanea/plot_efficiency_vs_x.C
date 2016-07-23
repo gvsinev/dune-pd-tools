@@ -52,7 +52,8 @@ void plot_efficiency_vs_x(unsigned int threshold) {
   efficiencyGraph.Draw("same");
 
   // Create a PNG file with the output
-  std::string outputFileName("efficiency_vs_x_" + std::to_string(threshold) + ".png");
+  std::string outputFileName("efficiency_vs_x_" + 
+                             std::to_string(threshold) + ".png");
   canvas.Print(outputFileName.c_str());
 
 }
