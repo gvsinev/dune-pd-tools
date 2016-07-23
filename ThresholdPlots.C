@@ -27,7 +27,7 @@ ThresholdPlots::ThresholdPlots(std::string const& option,
                       , fMinimumNPDs    ( minimumNPDs ) 
                       , fNPDs           ( 120         ) {
 
-  fInputFilename = "flash_time_dune1x2x6" + std::to_string(fMinimumNPDs) + "_" 
+  fInputFilename = "flash_time_dune1x2x6_" + std::to_string(fMinimumNPDs) + "_" 
                                           + fOption + ".root";
 
   for (int const& energy : fEnergyValues) {
